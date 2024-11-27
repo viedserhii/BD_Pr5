@@ -1,0 +1,575 @@
+
+CREATE TABLE Банківські_рахунки_брокерів
+(
+	Ключ_брокера  INTEGER  NOT NULL,
+	Банківський_рахунок  VARCHAR(20)  
+)
+;
+
+
+
+ALTER TABLE Банківські_рахунки_брокерів
+	ADD CONSTRAINT  XPKБанківські_раху  PRIMARY KEY (Ключ_брокера)
+;
+
+
+
+CREATE TABLE Банківські_рахунки_виробників
+(
+	Ключ_виробника  INTEGER  NOT NULL,
+	Банківський_рахунок  NUMERIC()  
+)
+;
+
+
+
+ALTER TABLE Банківські_рахунки_виробників
+	ADD CONSTRAINT  XPKБанківські_раху  PRIMARY KEY (Ключ_виробника)
+;
+
+
+
+CREATE TABLE Брокер
+(
+	Ключ_брокера  INTEGER  NOT NULL,
+	Прізвище  VARCHAR(20)  ,
+	По_Батькові  VARCHAR(20)  ,
+	Ім_я  VARCHAR(20)  ,
+	Ключ_контори  INTEGER  NOT NULL
+)
+;
+
+
+
+ALTER TABLE Брокер
+	ADD CONSTRAINT  XPKБрокер  PRIMARY KEY (Ключ_брокера)
+;
+
+
+
+CREATE TABLE Виробник
+(
+	Ключ_виробника  INTEGER  NOT NULL,
+	Назва_компанії_виробника  VARCHAR(20)  
+)
+;
+
+
+
+ALTER TABLE Виробник
+	ADD CONSTRAINT  XPKВиробник  PRIMARY KEY (Ключ_виробника)
+;
+
+
+
+CREATE TABLE Гарантійні_терміни_товарів
+(
+	Гарантійний_термін  DATE  ,
+	Код_товару  NUMERIC()  NOT NULL,
+	Ключ_виробника  INTEGER  NOT NULL
+)
+;
+
+
+
+ALTER TABLE Гарантійні_терміни_товарів
+	ADD CONSTRAINT  XPKГарантійні_терм  PRIMARY KEY (Код_товару,Ключ_виробника)
+;
+
+
+
+CREATE TABLE Контора
+(
+	Ключ_контори  INTEGER  NOT NULL,
+	Розмір_частки  INTEGER  
+)
+;
+
+
+
+ALTER TABLE Контора
+	ADD CONSTRAINT  XPKКонтора  PRIMARY KEY (Ключ_контори)
+;
+
+
+
+CREATE TABLE Партія_товарів
+(
+	Код_товару  INTEGER  NOT NULL,
+	Ключ_виробника  INTEGER  NOT NULL,
+	Ключ_брокера  INTEGER  NOT NULL,
+	Дата_оплати  BLOB()  
+)
+;
+
+
+
+ALTER TABLE Партія_товарів
+	ADD CONSTRAINT  XPKПартія_товарів  PRIMARY KEY (Код_товару,Ключ_виробника,Ключ_брокера)
+;
+
+
+
+CREATE TABLE Рахунки_контор
+(
+	Банківський_рахунок  VARCHAR(20)  ,
+	Ключ_контори  INTEGER  NOT NULL
+)
+;
+
+
+
+ALTER TABLE Рахунки_контор
+	ADD CONSTRAINT  XPKРахунки_контор  PRIMARY KEY (Ключ_контори)
+;
+
+
+
+CREATE TABLE Товар
+(
+	Код_товару  INTEGER  NOT NULL,
+	Назва_товару  VARCHAR(20)  ,
+	Кількість_товару  INTEGER  ,
+	Ключ_виробника  INTEGER  NOT NULL
+)
+;
+
+
+
+ALTER TABLE Товар
+	ADD CONSTRAINT  XPKТовар  PRIMARY KEY (Код_товару,Ключ_виробника)
+;
+
+
+
+CREATE TABLE Ціни_товарів
+(
+	Ціна  INTEGER  ,
+	Код_товару  INTEGER  NOT NULL,
+	Ключ_виробника  INTEGER  NOT NULL
+)
+;
+
+
+
+ALTER TABLE Ціни_товарів
+	ADD CONSTRAINT  XPKЦіни_товарів  PRIMARY KEY (Код_товару,Ключ_виробника)
+;
+
+
+
+ALTER TABLE Банківські_рахунки_брокерів
+	ADD CONSTRAINT R_17 FOREIGN KEY (Ключ_брокера) REFERENCES Брокер(Ключ_брокера)
+		ON DELETE CASCADE
+;
+
+
+
+ALTER TABLE Банківські_рахунки_виробників
+	ADD CONSTRAINT R_18 FOREIGN KEY (Ключ_виробника) REFERENCES Виробник(Ключ_виробника)
+		ON DELETE CASCADE
+;
+
+
+
+ALTER TABLE Брокер
+	ADD CONSTRAINT Наймає___Працює_на FOREIGN KEY (Ключ_контори) REFERENCES Контора(Ключ_контори)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+;
+
+
+
+ALTER TABLE Гарантійні_терміни_товарів
+	ADD CONSTRAINT R_20 FOREIGN KEY (Код_товару,Ключ_виробника) REFERENCES Товар(Код_товару,Ключ_виробника)
+		ON DELETE CASCADE
+		ON UPDATE NO ACTION
+;
+
+
+
+ALTER TABLE Партія_товарів
+	ADD CONSTRAINT R_10 FOREIGN KEY (Код_товару,Ключ_виробника) REFERENCES Товар(Код_товару,Ключ_виробника)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+;
+
+
+ALTER TABLE Партія_товарів
+	ADD CONSTRAINT R_11 FOREIGN KEY (Ключ_брокера) REFERENCES Брокер(Ключ_брокера)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+;
+
+
+
+ALTER TABLE Рахунки_контор
+	ADD CONSTRAINT R_15 FOREIGN KEY (Ключ_контори) REFERENCES Контора(Ключ_контори)
+		ON DELETE CASCADE
+		ON UPDATE NO ACTION
+;
+
+
+
+ALTER TABLE Товар
+	ADD CONSTRAINT R_8 FOREIGN KEY (Ключ_виробника) REFERENCES Виробник(Ключ_виробника)
+		ON DELETE CASCADE
+		ON UPDATE NO ACTION
+;
+
+
+
+ALTER TABLE Ціни_товарів
+	ADD CONSTRAINT R_19 FOREIGN KEY (Код_товару,Ключ_виробника) REFERENCES Товар(Код_товару,Ключ_виробника)
+		ON DELETE CASCADE
+		ON UPDATE NO ACTION
+;
+
+
+
+CREATE TRIGGER tI_Банківські_раху AFTER INSERT ON Банківські_рахунки_брокерів
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Брокер WHERE new.Ключ_брокера = Брокер.Ключ_брокера) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Банківські_рахунки_брокерів because Брокер does not exist.')
+ !!
+
+CREATE TRIGGER tD_Банківські_раху AFTER DELETE ON Банківські_рахунки_брокерів
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Брокер WHERE old.Ключ_брокера = Брокер.Ключ_брокера) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Банківські_рахунки_брокерів because Брокер exists.')
+ !!
+
+CREATE TRIGGER tU_Банківські_раху NO CASCADE BEFORE UPDATE ON Банківські_рахунки_брокерів
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Брокер WHERE new.Ключ_брокера = Брокер.Ключ_брокера) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Банківські_рахунки_брокерів because Брокер does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Банківські_раху AFTER INSERT ON Банківські_рахунки_виробників
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Виробник WHERE new.Ключ_виробника = Виробник.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Банківські_рахунки_виробників because Виробник does not exist.')
+ !!
+
+CREATE TRIGGER tD_Банківські_раху AFTER DELETE ON Банківські_рахунки_виробників
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Виробник WHERE old.Ключ_виробника = Виробник.Ключ_виробника) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Банківські_рахунки_виробників because Виробник exists.')
+ !!
+
+CREATE TRIGGER tU_Банківські_раху NO CASCADE BEFORE UPDATE ON Банківські_рахунки_виробників
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Виробник WHERE new.Ключ_виробника = Виробник.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Банківські_рахунки_виробників because Виробник does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Брокер AFTER INSERT ON Брокер
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+-- ERwin Builtin 27 ноября 2024 г. 8:53:21
+-- Брокер R/17 Банківські_рахунки_брокерів on parent insert cascade
+-- Application specific.  Left out intentionally.
+ !!
+
+CREATE TRIGGER tI_Брокер2 AFTER INSERT ON Брокер
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Контора WHERE new.Ключ_контори = Контора.Ключ_контори) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Брокер because Контора does not exist.')
+ !!
+
+CREATE TRIGGER tD_Брокер AFTER DELETE ON Брокер
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Партія_товарів WHERE Партія_товарів.Ключ_брокера = old.Ключ_брокера) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Брокер because Партія_товарів exists.')
+ !!
+
+CREATE TRIGGER tD_Брокер2 AFTER DELETE ON Брокер
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+    DELETE FROM Банківські_рахунки_брокерів
+      WHERE
+        Банківські_рахунки_брокерів.Ключ_брокера = old.Ключ_брокера
+ !!
+
+CREATE TRIGGER tU_Брокер NO CASCADE BEFORE UPDATE ON Брокер
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Брокер WHERE Брокер.Ключ_брокера <> Брокер.Ключ_брокера) > 0) AND
+     ((SELECT count(*) FROM Партія_товарів WHERE Партія_товарів.Ключ_брокера = old.Ключ_брокера) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Брокер because Партія_товарів exists.')
+ !!
+
+CREATE TRIGGER tU_Брокер2 NO CASCADE BEFORE UPDATE ON Брокер
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Брокер WHERE Брокер.Ключ_брокера <> Брокер.Ключ_брокера) > 0)
+     UPDATE Банківські_рахунки_брокерів
+       SET
+         Банківські_рахунки_брокерів.Ключ_брокера = new.Ключ_брокера
+       WHERE
+         Банківські_рахунки_брокерів.Ключ_брокера = old.Ключ_брокера
+ !!
+
+CREATE TRIGGER tU_Брокер3 NO CASCADE BEFORE UPDATE ON Брокер
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Контора WHERE new.Ключ_контори = Контора.Ключ_контори) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Брокер because Контора does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Виробник AFTER INSERT ON Виробник
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+-- ERwin Builtin 27 ноября 2024 г. 8:53:21
+-- Виробник R/18 Банківські_рахунки_виробників on parent insert cascade
+-- Application specific.  Left out intentionally.
+ !!
+
+CREATE TRIGGER tD_Виробник AFTER DELETE ON Виробник
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+    DELETE FROM Товар
+      WHERE
+        Товар.Ключ_виробника = old.Ключ_виробника
+ !!
+
+CREATE TRIGGER tD_Виробник2 AFTER DELETE ON Виробник
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+    DELETE FROM Банківські_рахунки_виробників
+      WHERE
+        Банківські_рахунки_виробників.Ключ_виробника = old.Ключ_виробника
+ !!
+
+CREATE TRIGGER tU_Виробник NO CASCADE BEFORE UPDATE ON Виробник
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Виробник WHERE Виробник.Ключ_виробника <> Виробник.Ключ_виробника) > 0) AND
+     ((SELECT count(*) FROM Товар WHERE Товар.Ключ_виробника = old.Ключ_виробника) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Виробник because Товар exists.')
+ !!
+
+CREATE TRIGGER tU_Виробник2 NO CASCADE BEFORE UPDATE ON Виробник
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Виробник WHERE Виробник.Ключ_виробника <> Виробник.Ключ_виробника) > 0)
+     UPDATE Банківські_рахунки_виробників
+       SET
+         Банківські_рахунки_виробників.Ключ_виробника = new.Ключ_виробника
+       WHERE
+         Банківські_рахунки_виробників.Ключ_виробника = old.Ключ_виробника
+ !!
+
+
+CREATE TRIGGER tI_Гарантійні_терм AFTER INSERT ON Гарантійні_терміни_товарів
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE new.Код_товару = Товар.Код_товару AND
+                                            new.Ключ_виробника = Товар.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Гарантійні_терміни_товарів because Товар does not exist.')
+ !!
+
+CREATE TRIGGER tD_Гарантійні_терм AFTER DELETE ON Гарантійні_терміни_товарів
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Товар WHERE old.Код_товару = Товар.Код_товару AND
+                                           old.Ключ_виробника = Товар.Ключ_виробника) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Гарантійні_терміни_товарів because Товар exists.')
+ !!
+
+CREATE TRIGGER tU_Гарантійні_терм NO CASCADE BEFORE UPDATE ON Гарантійні_терміни_товарів
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE new.Код_товару = Товар.Код_товару AND
+                                            new.Ключ_виробника = Товар.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Гарантійні_терміни_товарів because Товар does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Контора AFTER INSERT ON Контора
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+-- ERwin Builtin 27 ноября 2024 г. 8:53:21
+-- Контора R/15 Рахунки_контор on parent insert cascade
+-- Application specific.  Left out intentionally.
+ !!
+
+CREATE TRIGGER tD_Контора AFTER DELETE ON Контора
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Брокер WHERE Брокер.Ключ_контори = old.Ключ_контори) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Контора because Брокер exists.')
+ !!
+
+CREATE TRIGGER tD_Контора2 AFTER DELETE ON Контора
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+    DELETE FROM Рахунки_контор
+      WHERE
+        Рахунки_контор.Ключ_контори = old.Ключ_контори
+ !!
+
+CREATE TRIGGER tU_Контора NO CASCADE BEFORE UPDATE ON Контора
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Контора WHERE Контора.Ключ_контори <> Контора.Ключ_контори) > 0) AND
+     ((SELECT count(*) FROM Брокер WHERE Брокер.Ключ_контори = old.Ключ_контори) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Контора because Брокер exists.')
+ !!
+
+CREATE TRIGGER tU_Контора2 NO CASCADE BEFORE UPDATE ON Контора
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Контора WHERE Контора.Ключ_контори <> Контора.Ключ_контори) > 0) AND
+     ((SELECT count(*) FROM Рахунки_контор WHERE Рахунки_контор.Ключ_контори = old.Ключ_контори) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Контора because Рахунки_контор exists.')
+ !!
+
+
+CREATE TRIGGER tI_Партія_товарів AFTER INSERT ON Партія_товарів
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE new.Код_товару = Товар.Код_товару AND
+                                            new.Ключ_виробника = Товар.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Партія_товарів because Товар does not exist.')
+ !!
+
+CREATE TRIGGER tI_Партія_товарів2 AFTER INSERT ON Партія_товарів
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Брокер WHERE new.Ключ_брокера = Брокер.Ключ_брокера) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Партія_товарів because Брокер does not exist.')
+ !!
+
+CREATE TRIGGER tU_Партія_товарів NO CASCADE BEFORE UPDATE ON Партія_товарів
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE new.Код_товару = Товар.Код_товару AND
+                                            new.Ключ_виробника = Товар.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Партія_товарів because Товар does not exist.')
+ !!
+
+CREATE TRIGGER tU_Партія_товарів2 NO CASCADE BEFORE UPDATE ON Партія_товарів
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Брокер WHERE new.Ключ_брокера = Брокер.Ключ_брокера) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Партія_товарів because Брокер does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Рахунки_контор AFTER INSERT ON Рахунки_контор
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Контора WHERE new.Ключ_контори = Контора.Ключ_контори) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Рахунки_контор because Контора does not exist.')
+ !!
+
+CREATE TRIGGER tD_Рахунки_контор AFTER DELETE ON Рахунки_контор
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Контора WHERE old.Ключ_контори = Контора.Ключ_контори) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Рахунки_контор because Контора exists.')
+ !!
+
+CREATE TRIGGER tU_Рахунки_контор NO CASCADE BEFORE UPDATE ON Рахунки_контор
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Контора WHERE new.Ключ_контори = Контора.Ключ_контори) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Рахунки_контор because Контора does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Товар AFTER INSERT ON Товар
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+-- ERwin Builtin 27 ноября 2024 г. 8:53:21
+-- Товар R/19 Ціни_товарів on parent insert cascade
+-- Application specific.  Left out intentionally.
+ !!
+
+CREATE TRIGGER tI_Товар2 AFTER INSERT ON Товар
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+-- ERwin Builtin 27 ноября 2024 г. 8:53:21
+-- Товар R/20 Гарантійні_терміни_товарів on parent insert cascade
+-- Application specific.  Left out intentionally.
+ !!
+
+CREATE TRIGGER tI_Товар3 AFTER INSERT ON Товар
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Виробник WHERE new.Ключ_виробника = Виробник.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Товар because Виробник does not exist.')
+ !!
+
+CREATE TRIGGER tD_Товар AFTER DELETE ON Товар
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Партія_товарів WHERE Партія_товарів.Код_товару = old.Код_товару AND
+                                                    Партія_товарів.Ключ_виробника = old.Ключ_виробника) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Товар because Партія_товарів exists.')
+ !!
+
+CREATE TRIGGER tD_Товар2 AFTER DELETE ON Товар
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+    DELETE FROM Ціни_товарів
+      WHERE
+        Ціни_товарів.Код_товару = old.Код_товару AND
+        Ціни_товарів.Ключ_виробника = old.Ключ_виробника
+ !!
+
+CREATE TRIGGER tD_Товар3 AFTER DELETE ON Товар
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+    DELETE FROM Гарантійні_терміни_товарів
+      WHERE
+        Гарантійні_терміни_товарів.Код_товару = old.Код_товару AND
+        Гарантійні_терміни_товарів.Ключ_виробника = old.Ключ_виробника
+ !!
+
+CREATE TRIGGER tU_Товар NO CASCADE BEFORE UPDATE ON Товар
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE Товар.Код_товару <> Товар.Код_товару OR 
+                                            Товар.Ключ_виробника <> Товар.Ключ_виробника) > 0) AND
+     ((SELECT count(*) FROM Партія_товарів WHERE Партія_товарів.Код_товару = old.Код_товару AND
+                                                 Партія_товарів.Ключ_виробника = old.Ключ_виробника) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Товар because Партія_товарів exists.')
+ !!
+
+CREATE TRIGGER tU_Товар2 NO CASCADE BEFORE UPDATE ON Товар
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE Товар.Код_товару <> Товар.Код_товару OR 
+                                            Товар.Ключ_виробника <> Товар.Ключ_виробника) > 0) AND
+     ((SELECT count(*) FROM Ціни_товарів WHERE Ціни_товарів.Код_товару = old.Код_товару AND
+                                               Ціни_товарів.Ключ_виробника = old.Ключ_виробника) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Товар because Ціни_товарів exists.')
+ !!
+
+CREATE TRIGGER tU_Товар3 NO CASCADE BEFORE UPDATE ON Товар
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE Товар.Код_товару <> Товар.Код_товару OR 
+                                            Товар.Ключ_виробника <> Товар.Ключ_виробника) > 0) AND
+     ((SELECT count(*) FROM Гарантійні_терміни_товарів WHERE Гарантійні_терміни_товарів.Код_товару = old.Код_товару AND
+                                                             Гарантійні_терміни_товарів.Ключ_виробника = old.Ключ_виробника) > 0))
+       SIGNAL SQLSTATE '75001' ('Cannot update Товар because Гарантійні_терміни_товарів exists.')
+ !!
+
+CREATE TRIGGER tU_Товар4 NO CASCADE BEFORE UPDATE ON Товар
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Виробник WHERE new.Ключ_виробника = Виробник.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Товар because Виробник does not exist.')
+ !!
+
+
+CREATE TRIGGER tI_Ціни_товарів AFTER INSERT ON Ціни_товарів
+   REFERENCING NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE new.Код_товару = Товар.Код_товару AND
+                                            new.Ключ_виробника = Товар.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot insert Ціни_товарів because Товар does not exist.')
+ !!
+
+CREATE TRIGGER tD_Ціни_товарів AFTER DELETE ON Ціни_товарів
+   REFERENCING OLD AS OLD FOR EACH ROW MODE DB2SQL
+   WHEN ((SELECT count(*) FROM Товар WHERE old.Код_товару = Товар.Код_товару AND
+                                           old.Ключ_виробника = Товар.Ключ_виробника) > 0)
+     SIGNAL SQLSTATE '75001' ('Cannot delete Ціни_товарів because Товар exists.')
+ !!
+
+CREATE TRIGGER tU_Ціни_товарів NO CASCADE BEFORE UPDATE ON Ціни_товарів
+    REFERENCING OLD AS OLD NEW AS NEW FOR EACH ROW MODE DB2SQL
+   WHEN (((SELECT count(*) FROM Товар WHERE new.Код_товару = Товар.Код_товару AND
+                                            new.Ключ_виробника = Товар.Ключ_виробника) = 0)
+     )
+       SIGNAL SQLSTATE '75001' ('Cannot update Ціни_товарів because Товар does not exist.')
+ !!
+
